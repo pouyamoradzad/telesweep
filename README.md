@@ -2,6 +2,15 @@
 
 **Automatically clean worthless Telegram chats — local, secure, and dry-run by default.**
 
+[![CI](https://github.com/pouyamoradzad/telesweep/actions/workflows/ci.yml/badge.svg)](https://github.com/pouyamoradzad/telesweep/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Languages: 10](https://img.shields.io/badge/Languages-10-orange.svg)](#internationalization)
+[![GitHub Pages](https://img.shields.io/badge/Website-online-brightgreen.svg)](https://pouyamoradzad.github.io/telesweep/)
+
+🌐 **[Visit the landing page](https://pouyamoradzad.github.io/telesweep/)** — a full
+visual tour of the project.
+
 TeleSweep scans every dialog on your Telegram account, scores each one against
 strict rules (deleted accounts, dead bots, abandoned channels, one-way spam,
 empty chats), and shows you exactly what is worthless — with the reason for
