@@ -1,0 +1,36 @@
+# تنظیمات تلگرام کلینر — نمونه
+# این فایل را به config/config.yaml کپی کنید (یا از سؤالات تعاملی استفاده کنید).
+
+# --- آستانه‌ها ---
+thresholds:
+  inactivity_days: 180        # آستانه بی‌تحرکی
+  risk_score: 80              # حداقل امتیاز خطر برای پیشنهاد حذف
+  min_evidence: 2             # حداقل تعداد evidence مستقل برای حذف
+  one_way_ratio: 0.8          # نسبت پیام یک‌طرفه برای قانون one_way_spam
+  one_way_reply_days: 90      # بدون پاسخ کاربر در این مدت
+  recent_message_sample: 20   # تعداد پیام نمونه‌برداری شده
+
+# --- نرخ درخواست (جلوگیری از FloodWait/Ban) ---
+rate_limit:
+  min_delay: 0.5              # حداقل تأخیر بین درخاست‌ها (ثانیه)
+  max_delay: 1.0              # حداکثر تأخیر تصادفی (ثانیه)
+  max_ops_per_hour: 100       # سقف عملیات تخریبی در ساعت
+
+# --- امنیت ---
+security:
+  secrets_file: config/secrets.enc
+  session_file: data/telesweep.session
+  webui_host: 127.0.0.1       # فقط لوکال‌هاست — هرگز 0.0.0.0
+  webui_port: 8462
+  require_final_confirm: true # تأیید نهایی قبل از حذف
+
+# --- حفاظت hardcoded (همیشه فعال — قابل تغییر نیست) ---
+protection:
+  skip_saved_messages: true
+  skip_pinned: true
+  skip_contacts: true
+
+# --- لیست سفید اختیاری (شناسه یا یوزرنیم) ---
+whitelist: []
+#  - 12345678
+#  - username_canal

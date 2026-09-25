@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="TeleSweep — automatically clean worthless Telegram chats. Local, secure, dry-run by default. Open source.">
+<meta name="author" content="TeleSweep contributors">
+<meta property="og:title" content="TeleSweep — Clean your dead Telegram chats">
+<meta property="og:description" content="Automatically find worthless Telegram dialogs: deleted accounts, dead bots, abandoned channels, spam. Local, secure, dry-run by default.">
+<meta property="og:type" content="website">
+<title>TeleSweep — Clean your dead Telegram chats</title>
+<style>
+/* ============================================================
+   TeleSweep Landing Page
+   ============================================================ */
+
+:root {
+  --bg: #0a0e14;
+  --bg-2: #0d1117;
+  --panel: #131922;
+  --panel-2: #1a2230;
+  --border: #232d3d;
+  --text: #e6edf3;
+  --muted: #8b98a9;
+  --dim: #5c6a7a;
+  --accent: #4cc2ff;
+  --accent-2: #7ee787;
+  --danger: #ff7b72;
+  --warn: #e3b341;
+  --purple: #d2a8ff;
+  --radius: 16px;
+  --shadow: 0 24px 60px -20px rgba(0,0,0,.7);
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic",
+          "Vazirmatn", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", "Fira Code",
+          Menlo, Consolas, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------- animated background ---------- */
+.bg-fx {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 500px at 12% -8%, rgba(76,194,255,.16), transparent 60%),
+    radial-gradient(800px 480px at 88% 4%, rgba(210,168,255,.14), transparent 60%),
+    radial-gradient(700px 460px at 50% 108%, rgba(126,231,135,.10), transparent 60%),
+    var(--bg);
+}
+.bg-fx::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+
+html[dir="rtl"] { --font: "Vazirmatn", "Noto Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif; }
+
+/* ---------- layout ---------- */
+.wrap { width: min(1180px, 92vw); margin: 0 auto; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ---------- nav ---------- */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(14px);
+  background: rgba(10,14,20,.78);
+  border-bottom: 1px solid var(--border);
+}
+nav .wrap { display: flex; align-items: center; gap: 18px; height: 66px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.1rem; letter-spacing: .3px; }
+.brand .logo { font-size: 1.5rem; }
+nav .links { display: flex; gap: 6px; margin-inline-start: auto; flex-wrap: wrap; }
+nav .links a {
+  color: var(--muted);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: .9rem;
+  font-weight: 600;
+  transition: all .18s;
+}
+nav .links a:hover { color: var(--text); background: var(--panel-2); text-decoration: none; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: .94rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform .18s, box-shadow .18s, background .18s;
+  text-decoration: none;
+}
+.btn:hover { transform: translateY(-2px); text-decoration: none; }
+.btn-primary {
+  background: linear-gradient(135deg, #4cc2ff, #7ee787);
+  color: #04110d;
+  box-shadow: 0 10px 30px -10px rgba(76,194,255,.55);
+}
+.btn-primary:hover { box-shadow: 0 16px 40px -12px rgba(76,194,255,.7); }
+.btn-ghost {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-ghost:hover { background: var(--panel-2); }
+
+/* ---------- hero ---------- */
+header.hero { padding: 96px 0 72px; text-align: center; }
+.badge-pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-radius: 999px;
+  background: rgba(76,194,255,.08);
+  border: 1px solid rgba(76,194,255,.28);
+  color: var(--accent);
+  font-size: .82rem; font-weight: 700;
+  letter-spacing: .5px; text-transform: uppercase;
+}
+h1 {
+  font-size: clamp(2.6rem, 6.5vw, 4.6rem);
+  line-height: 1.05;
+  margin: 26px auto 20px;
+  max-width: 19ch;
+  font-weight: 850;
+  letter-spacing: -.03em;
+}
+h1 .grad {
+  background: linear-gradient(110deg, #4cc2ff 10%, #7ee787 48%, #d2a8ff 88%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero p.lead {
+  color: var(--muted);
+  font-size: clamp(1.05rem, 2.2vw, 1.25rem);
+  max-width: 62ch;
+  margin: 0 auto 34px;
+}
+.hero .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+.hero .trust {
+  margin-top: 44px; display: flex; gap: 30px; justify-content: center;
+  flex-wrap: wrap; color: var(--dim); font-size: .86rem;
+}
+.hero .trust span { display: inline-flex; align-items: center; gap: 7px; }
+html[dir="rtl"] .hero .trust { direction: rtl; }
+
+/* ---------- terminal demo ---------- */
+.terminal {
+  margin: 64px auto 0;
+  max-width: 860px;
+  background: #060a10;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  text-align: start;
+}
+.terminal-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 16px;
+  background: #0c121b;
+  border-bottom: 1px solid var(--border);
+}
+.dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+.terminal-bar .title { margin-inline-start: 8px; color: var(--dim); font-size: .8rem; font-family: var(--mono); }
+.terminal-body {
+  padding: 20px 22px;
+  font-family: var(--mono);
+  font-size: .85rem;
+  line-height: 1.85;
+  color: #c9d6e3;
+  max-height: 420px;
+  overflow: hidden;
+}
+.terminal-body .ln { white-space: pre-wrap; }
+.c-prompt { color: var(--accent-2); }
+.c-flag { color: var(--danger); font-weight: 700; }
+.c-ok { color: var(--accent-2); }
+.c-warn { color: var(--warn); }
+.c-mut { color: var(--dim); }
+.c-hl { color: var(--accent); }
+.cursor-blink {
+  display: inline-block; width: 8px; height: 15px;
+  background: var(--accent); vertical-align: -2px;
+  animation: blink 1.1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ---------- sections ---------- */
+section { padding: 88px 0; }
+.sec-head { text-align: center; max-width: 62ch; margin: 0 auto 56px; }
+.sec-head .eyebrow {
+  color: var(--accent); font-weight: 800; font-size: .8rem;
+  letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 14px;
+}
+h2 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 16px; letter-spacing: -.02em; }
+.sec-head p { color: var(--muted); margin: 0; font-size: 1.04rem; }
+
+/* ---------- feature cards ---------- */
+.grid { display: grid; gap: 20px; }
+.g-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.g-2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.card {
+  background: linear-gradient(180deg, var(--panel), rgba(19,25,34,.55));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  transition: transform .22s, border-color .22s, box-shadow .22s;
+  position: relative;
+  overflow: hidden;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
+  box-shadow: 0 20px 44px -24px rgba(76,194,255,.35);
+}
+.card .icon {
+  width: 48px; height: 48px; border-radius: 13px;
+  display: grid; place-items: center;
+  font-size: 1.5rem;
+  background: rgba(76,194,255,.10);
+  border: 1px solid rgba(76,194,255,.22);
+  margin-bottom: 18px;
+}
+.card h3 { margin: 0 0 10px; font-size: 1.14rem; }
+.card p { margin: 0; color: var(--muted); font-size: .96rem; }
+.card.glow::after {
+  content: "";
+  position: absolute; top: -60%; inset-inline-end: -30%;
+  width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(76,194,255,.14), transparent 70%);
+  pointer-events: none;
+}
+
+/* ---------- steps ---------- */
+.steps { counter-reset: step; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.step {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 26px 24px;
+  position: relative;
+}
+.step .num {
+  position: absolute; top: -16px; inset-inline-start: 24px;
+  width: 34px; height: 34px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #04110d; font-weight: 850;
+  display: grid; place-items: center; font-size: .95rem;
+}
+.step h3 { margin: 12px 0 8px; font-size: 1.05rem; }
+.step p { margin: 0; color: var(--muted); font-size: .92rem; }
+.step code {
+  font-family: var(--mono); font-size: .82rem;
+  background: rgba(255,255,255,.06); padding: 2px 7px; border-radius: 6px;
+  color: var(--accent-2);
+}
+
+/* ---------- rules table ---------- */
+.tbl-wrap {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+th, td { padding: 15px 20px; text-align: start; border-bottom: 1px solid var(--border); }
+th { background: #0f151f; color: var(--muted); font-size: .78rem; letter-spacing: 1.5px; text-transform: uppercase; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: rgba(76,194,255,.04); }
+td code {
+  font-family: var(--mono); font-size: .84rem;
+  background: rgba(255,255,255,.06); padding: 3px 9px; border-radius: 6px;
+  color: var(--accent);
+}
+.pill { display: inline-block; padding: 3px 11px; border-radius: 999px; font-size: .76rem; font-weight: 700; }
+.pill.abs { background: rgba(255,123,114,.14); color: var(--danger); border: 1px solid rgba(255,123,114,.3); }
+.pill.hi  { background: rgba(227,179,65,.12); color: var(--warn); border: 1px solid rgba(227,179,65,.28); }
+.pill.md  { background: rgba(76,194,255,.12); color: var(--accent); border: 1px solid rgba(76,194,255,.26); }
+
+/* ---------- security band ---------- */
+.band {
+  background: linear-gradient(135deg, rgba(76,194,255,.08), rgba(210,168,255,.07));
+  border: 1px solid rgba(76,194,255,.22);
+  border-radius: 22px;
+  padding: 44px;
+}
+.band-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 44px; align-items: center; }
+@media (max-width: 860px) { .band-grid { grid-template-columns: 1fr; } }
+.band h2 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); }
+.band ul { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 14px; }
+.band li { display: flex; gap: 12px; align-items: flex-start; color: var(--muted); font-size: .97rem; }
+.band li .tick {
+  flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(126,231,135,.14); color: var(--accent-2);
+  display: grid; place-items: center; font-size: .75rem; font-weight: 800;
+  margin-top: 2px;
+}
+.shield-art {
+  display: grid; place-items: center;
+  aspect-ratio: 1; max-width: 300px; margin: 0 auto;
+}
+.shield-art svg { width: 100%; height: auto; filter: drop-shadow(0 18px 40px rgba(76,194,255,.28)); }
+
+/* ---------- lang flags ---------- */
+.langs { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.lang {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 999px; padding: 9px 18px;
+  font-size: .9rem; font-weight: 600; color: var(--muted);
+  transition: all .18s;
+}
+.lang:hover { color: var(--text); border-color: var(--accent); transform: translateY(-2px); }
+
+/* ---------- stats ---------- */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+.stat {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 26px 20px; text-align: center;
+}
+.stat .v { font-size: 2rem; font-weight: 850; letter-spacing: -.02em;
+  background: linear-gradient(120deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.stat .l { color: var(--muted); font-size: .84rem; margin-top: 4px; }
+
+/* ---------- code block ---------- */
+.code-block {
+  background: #060a10; border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px 22px;
+  font-family: var(--mono); font-size: .87rem; line-height: 1.9;
+  color: #c9d6e3; overflow-x: auto;
+}
+.code-block .c-mut { color: var(--dim); }
+.code-block .c-hl { color: var(--accent); }
+.code-block .c-ok { color: var(--accent-2); }
+.code-block .c-warn { color: var(--warn); }
+
+/* ---------- donation ---------- */
+#donate { scroll-margin-top: 90px; }
+.donate-band {
+  background:
+    radial-gradient(700px 340px at 85% 0%, rgba(255,123,114,.12), transparent 60%),
+    linear-gradient(160deg, rgba(210,168,255,.07), rgba(76,194,255,.05));
+  border: 1px solid rgba(210,168,255,.25);
+  border-radius: 22px;
+  padding: 48px 40px;
+}
+.donate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: start; }
+@media (max-width: 900px) { .donate-grid { grid-template-columns: 1fr; } }
+.crypto-card {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 14px;
+}
+.crypto-ico {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: grid; place-items: center; font-size: 1.3rem; font-weight: 800;
+  flex: 0 0 auto;
+}
+.crypto-card .net { font-weight: 700; font-size: .95rem; }
+.crypto-card .addr {
+  font-family: var(--mono); font-size: .78rem; color: var(--muted);
+  word-break: break-all; margin-top: 2px;
+}
+.copy-btn {
+  margin-inline-start: auto; flex: 0 0 auto;
+  background: var(--panel-2); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 9px; padding: 7px 13px;
+  font-size: .8rem; font-weight: 700; cursor: pointer; transition: all .15s;
+}
+.copy-btn:hover { color: var(--accent-2); border-color: var(--accent-2); }
+.copy-btn.done { color: var(--accent-2); border-color: var(--accent-2); }
+.other-help { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 13px; }
+.other-help li { display: flex; gap: 12px; color: var(--muted); font-size: .96rem; align-items: flex-start; }
+.security-note {
+  margin-top: 26px; padding: 16px 18px;
+  background: rgba(255,123,114,.07);
+  border: 1px solid rgba(255,123,114,.25);
+  border-radius: 12px;
+  font-size: .88rem; color: var(--muted);
+}
+.security-note b { color: var(--danger); }
+
+/* ---------- footer ---------- */
+footer { border-top: 1px solid var(--border); padding: 40px 0 56px; margin-top: 40px; }
+footer .wrap { display: flex; gap: 20px; justify-content: space-between; align-items: center; flex-wrap: wrap; color: var(--dim); font-size: .88rem; }
+footer .links { display: flex; gap: 18px; flex-wrap: wrap; }
+
+/* ---------- reveal animation ---------- */
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s ease, transform .6s ease; }
+.reveal.in { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+</style>
+</head>
+<body>
+<div class="bg-fx"></div>
+
+<!-- ============================== NAV ============================== -->
+<nav>
+  <div class="wrap">
+    <div class="brand"><span class="logo">🧹</span> TeleSweep</div>
+    <div class="links">
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="#rules">Rules</a>
+      <a href="#security">Security</a>
+      <a href="#install">Install</a>
+      <a href="#donate">Support</a>
+    </div>
+    <a class="btn btn-primary" href="https://github.com/pouyamoradzad/telesweep" target="_blank" rel="noopener">★ Star on GitHub</a>
+  </div>
+</nav>
+
+<!-- ============================== HERO ============================== -->
+<header class="hero">
+  <div class="wrap">
+    <span class="badge-pill">🔒 Local · Open source · No telemetry</span>
+    <h1>Clean your <span class="grad">dead Telegram chats</span> — automatically</h1>
+    <p class="lead">
+      TeleSweep scans every dialog on your account, scores it against strict
+      rules — deleted accounts, dead bots, abandoned channels, one-way spam —
+      and shows you exactly what is worthless, with the reason for every
+      verdict. <b>Nothing is ever deleted until you confirm it.</b>
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="#install">Get started — it's free</a>
+      <a class="btn btn-ghost" href="https://github.com/pouyamoradzad/telesweep" target="_blank" rel="noopener">View source code</a>
+    </div>
+    <div class="trust">
+      <span>✅ Dry-run by default</span>
+      <span>🛡️ AES-256-GCM at rest</span>
+      <span>🌍 10 languages + RTL</span>
+      <span>💜 No ads, no premium</span>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="title">telesweep scan — dry-run</span>
+      </div>
+      <div class="terminal-body">
+<span class="ln"><span class="c-prompt">$</span> python main.py scan</span>
+<span class="ln"><span class="c-mut">Scanning dialogs...</span> <span class="c-hl">247/247</span></span>
+<span class="ln"></span>
+<span class="ln"><span class="c-hl">┌────────────────────────────────────────────────────┐</span></span>
+<span class="ln"><span class="c-hl">│</span>  <span class="c-flag">✕ @cheap_airdrop_bot</span>          <span class="c-flag">score 92</span> <span class="c-hl">│</span></span>
+<span class="ln"><span class="c-hl">│</span>    <span class="c-mut">dead_bot</span> · no message in 214 days          <span class="c-hl">│</span></span>
+<span class="ln"><span class="c-hl">│</span>    <span class="c-mut">scam_spam_flag</span> · "airdrop", "crypto giveaway" <span class="c-hl">│</span></span>
+<span class="ln"><span class="c-hl">└────────────────────────────────────────────────────┘</span></span>
+<span class="ln"><span class="c-hl">┌────────────────────────────────────────────────────┐</span></span>
+<span class="ln"><span class="c-hl">│</span>  <span class="c-flag">✕ Deleted account #4821</span>      <span class="c-flag">score 100</span><span class="c-hl"> │</span></span>
+<span class="ln"><span class="c-hl">│</span>    <span class="c-mut">deleted_account</span> · absolute verdict         <span class="c-hl">│</span></span>
+<span class="ln"><span class="c-hl">└────────────────────────────────────────────────────┘</span></span>
+<span class="ln"><span class="c-ok">✓ 38 dialogs flagged · 12 protected · 0 deleted (dry-run)</span></span>
+<span class="ln"><span class="c-mut">Reports written to reports/ (JSON · CSV · HTML)</span><span class="cursor-blink"></span></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== STATS ============================== -->
+<section style="padding-top:20px">
+  <div class="wrap">
+    <div class="stats reveal">
+      <div class="stat"><div class="v">6</div><div class="l">independent rules</div></div>
+      <div class="stat"><div class="v">0–100</div><div class="l">risk score per chat</div></div>
+      <div class="stat"><div class="v">10</div><div class="l">languages, full RTL</div></div>
+      <div class="stat"><div class="v">0</div><div class="l">servers · telemetry · ads</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FEATURES ============================== -->
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Features</div>
+      <h2>Everything you need to take out the trash</h2>
+      <p>Years of dead bots, abandoned channels and deleted accounts add up.
+         TeleSweep audits all of it — and shows its work.</p>
+    </div>
+    <div class="grid g-3">
+      <div class="card glow reveal">
+        <div class="icon">⚖️</div>
+        <h3>Strict rules engine</h3>
+        <p>Every dialog gets a 0–100 risk score with per-rule evidence. A chat
+           is flagged only when the score reaches the threshold <b>and</b> at
+           least two independent rules agree — never a single hunch.</p>
+      </div>
+      <div class="card glow reveal">
+        <div class="icon">🧪</div>
+        <h3>Dry-run by default</h3>
+        <p>Every interface — CLI, terminal UI, web UI — shows exactly what
+           would happen before anything changes. Real deletion always needs
+           an explicit, deliberate confirmation.</p>
+      </div>
+      <div class="card glow reveal">
+        <div class="icon">🛡️</div>
+        <h3>Hardcoded protections</h3>
+        <p>Saved Messages, pinned chats and real contacts are never deleted —
+           enforced at the code level and re-checked in the action layer as a
+           second line of defense.</p>
+      </div>
+      <div class="card glow reveal">
+        <div class="icon">🔐</div>
+        <h3>Credentials encrypted</h3>
+        <p>API keys are encrypted at rest with AES-256-GCM; the key is derived
+           from your passphrase via PBKDF2-HMAC-SHA256 with 200,000 iterations.
+           Logs are sanitized of phone numbers, codes and tokens.</p>
+      </div>
+      <div class="card glow reveal">
+        <div class="icon">📊</div>
+        <h3>Detailed reports</h3>
+        <p>JSON, CSV and HTML reports with per-dialog reasons, risk scores and
+           outcomes. Keep the audit trail of exactly what was cleaned and why.</p>
+      </div>
+      <div class="card glow reveal">
+        <div class="icon">🌍</div>
+        <h3>Truly international</h3>
+        <p>Ten locales out of the box — English, Arabic, German, Spanish,
+           Persian, French, Portuguese, Russian, Turkish, Chinese — with full
+           right-to-left support in the terminal, web and reports.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== HOW IT WORKS ============================== -->
+<section id="how">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">How it works</div>
+      <h2>From install to clean in four steps</h2>
+      <p>No accounts, no sign-ups. Everything happens on your own machine.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="num">1</div>
+        <h3>Get API keys</h3>
+        <p>Grab your personal <code>api_id</code> and <code>api_hash</code> from
+           <a href="https://my.telegram.org" target="_blank" rel="noopener">my.telegram.org</a>.
+           They never leave your computer.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">2</div>
+        <h3>Initialize</h3>
+        <p><code>python main.py init</code> encrypts your credentials with a
+           passphrase you choose. Stored with <code>0600</code> permissions.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">3</div>
+        <h3>Scan (read-only)</h3>
+        <p><code>python main.py scan</code> scores every dialog and writes
+           reports. Nothing is deleted — this is pure audit.</p>
+      </div>
+      <div class="step reveal">
+        <div class="num">4</div>
+        <h3>Review &amp; confirm</h3>
+        <p><code>python main.py review</code> opens the terminal UI. Select what
+           to remove, confirm, and TeleSweep does the rest — rate-limited and
+           FloodWait-safe.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== RULES ============================== -->
+<section id="rules">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">The deletion contract</div>
+      <h2>Six rules. No guesses. Always justified.</h2>
+      <p>A dialog is flagged <b>only when both</b> hold: risk score ≥ 80
+         (configurable) <b>and</b> at least <code>min_evidence</code> (default 2)
+         independent rules fired. The one exception is a deleted account — an
+         absolute verdict.</p>
+    </div>
+    <div class="tbl-wrap reveal" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr><th>Rule</th><th>Fires when…</th><th>Weight</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>deleted_account</code></td>
+            <td>The account was deleted from Telegram — the person is gone and the dialog is pure dead data.</td>
+            <td><span class="pill abs">100 · absolute</span></td>
+          </tr>
+          <tr>
+            <td><code>scam_spam_flag</code></td>
+            <td>Telegram flagged the account as scam/fake, or the name and bio match scam and spam keyword patterns.</td>
+            <td><span class="pill hi">80–90</span></td>
+          </tr>
+          <tr>
+            <td><code>dead_bot</code></td>
+            <td>A bot that has sent no message in the inactivity window (default 180 days).</td>
+            <td><span class="pill hi">85</span></td>
+          </tr>
+          <tr>
+            <td><code>abandoned_channel</code></td>
+            <td>A channel or group inactive for the inactivity window; weight scales with how little history it has.</td>
+            <td><span class="pill md">70–80</span></td>
+          </tr>
+          <tr>
+            <td><code>one_way_spam</code></td>
+            <td>&gt;80% of messages are one-way from them with links or ads, and you have not replied in 90 days.</td>
+            <td><span class="pill md">65–75</span></td>
+          </tr>
+          <tr>
+            <td><code>empty_chat</code></td>
+            <td>Zero messages, or just one or two very old ones.</td>
+            <td><span class="pill md">70–72</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== SECURITY ============================== -->
+<section id="security">
+  <div class="wrap">
+    <div class="band reveal">
+      <div class="band-grid">
+        <div>
+          <div class="eyebrow" style="color:var(--accent);font-weight:800;font-size:.8rem;letter-spacing:2.5px;text-transform:uppercase">Security first</div>
+          <h2>Your account, your machine, your rules</h2>
+          <ul>
+            <li><span class="tick">✓</span><span><b>Local only.</b> The only network calls go to Telegram's own MTProto servers. The web UI binds to <code>127.0.0.1</code> and nothing else.</span></li>
+            <li><span class="tick">✓</span><span><b>Encrypted at rest.</b> AES-256-GCM with a PBKDF2-HMAC-SHA256 key derived from your passphrase (200,000 iterations).</span></li>
+            <li><span class="tick">✓</span><span><b>Sanitized logging.</b> A filter strips phone numbers, login codes, API hashes, bot tokens and session strings from every log record.</span></li>
+            <li><span class="tick">✓</span><span><b>Rate limiting + FloodWait handling</b> with per-dialog timeouts, so a scan can never get your account restricted.</span></li>
+            <li><span class="tick">✓</span><span><b>Constant-time token comparison</b> for the web UI, and a one-time token printed in your terminal.</span></li>
+            <li><span class="tick">✓</span><span><b>No telemetry, no analytics, no uploads</b> of any kind — ever.</span></li>
+          </ul>
+        </div>
+        <div class="shield-art">
+          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="sg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#4cc2ff"/>
+                <stop offset="100%" stop-color="#7ee787"/>
+              </linearGradient>
+            </defs>
+            <path d="M100 14 L168 40 V96 C168 142 138 172 100 188 C62 172 32 142 32 96 V40 Z"
+                  stroke="url(#sg)" stroke-width="4" fill="rgba(76,194,255,.07)"/>
+            <path d="M72 100 L92 122 L132 78" stroke="url(#sg)" stroke-width="7"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="100" cy="100" r="64" stroke="rgba(76,194,255,.18)" stroke-width="1.5" stroke-dasharray="6 8"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== LANGUAGES ============================== -->
+<section id="i18n">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Internationalization</div>
+      <h2>Speaks your language</h2>
+      <p>Ten locales ship in the box. Pick one with <code>--lang</code>, or use
+         the language picker in the web UI. Adding a language is a single JSON
+         file.</p>
+    </div>
+    <div class="langs reveal">
+      <span class="lang">🇬🇧 English</span>
+      <span class="lang">🇸🇦 العربية</span>
+      <span class="lang">🇩🇪 Deutsch</span>
+      <span class="lang">🇪🇸 Español</span>
+      <span class="lang">🇮🇷 فارسی</span>
+      <span class="lang">🇫🇷 Français</span>
+      <span class="lang">🇧🇷 Português</span>
+      <span class="lang">🇷🇺 Русский</span>
+      <span class="lang">🇹🇷 Türkçe</span>
+      <span class="lang">🇨🇳 中文</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== INSTALL ============================== -->
+<section id="install">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Installation</div>
+      <h2>Running in under a minute</h2>
+      <p>Requires Python 3.9 or newer. No compilation, no containers.</p>
+    </div>
+    <div class="code-block reveal">
+<span class="c-mut"># 1 · clone</span>
+<span class="c-hl">$</span> git clone https://github.com/pouyamoradzad/telesweep.git
+<span class="c-hl">$</span> cd telesweep
+<span class="c-mut"># 2 · install dependencies</span>
+<span class="c-hl">$</span> pip install -r requirements.txt
+<span class="c-mut"># 3 · add your Telegram API keys (encrypted on disk)</span>
+<span class="c-hl">$</span> python main.py init
+<span class="c-mut"># 4 · scan — nothing is deleted, this is read-only</span>
+<span class="c-hl">$</span> python main.py scan
+<span class="c-mut"># 5 · review in the terminal UI, then decide</span>
+<span class="c-hl">$</span> python main.py review
+<span class="c-warn"># web UI instead? localhost only, one-time token:</span>
+<span class="c-hl">$</span> python main.py web
+    </div>
+    <p style="text-align:center;color:var(--muted);margin-top:22px;font-size:.94rem" class="reveal">
+      Prefer a package? Install with <code style="font-family:var(--mono);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:6px;color:var(--accent-2)">pip install telesweep</code>
+      and run <code style="font-family:var(--mono);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:6px;color:var(--accent-2)">telesweep</code> from anywhere.
+    </p>
+  </div>
+</section>
+
+<!-- ============================== DONATION ============================== -->
+<section id="donate">
+  <div class="wrap">
+    <div class="donate-band reveal">
+      <div class="donate-grid">
+        <div>
+          <div class="eyebrow" style="color:var(--purple);font-weight:800;font-size:.8rem;letter-spacing:2.5px;text-transform:uppercase">Support TeleSweep</div>
+          <h2 style="margin:12px 0 14px">Free forever. Tips welcome. 🧡</h2>
+          <p style="color:var(--muted);margin:0 0 26px">
+            TeleSweep is free, open source, and will stay that way. It has no
+            ads, no premium tier, and no telemetry — nothing is ever sold.
+            If it saved you some time cleaning out years of dead chats, a tip
+            is a kind way to say thanks and help cover development.
+          </p>
+
+          <div class="crypto-card">
+            <div class="crypto-ico" style="background:rgba(76,194,255,.14);color:var(--accent)">TON</div>
+            <div>
+              <div class="net">Toncoin (TON)</div>
+              <div class="addr">TBCQztfSB4kbduM26bgJMRHgXzDZD6PL4L</div>
+            </div>
+            <button class="copy-btn" data-addr="TBCQztfSB4kbduM26bgJMRHgXzDZD6PL4L">Copy</button>
+          </div>
+
+          <div class="crypto-card">
+            <div class="crypto-ico" style="background:rgba(227,179,65,.14);color:var(--warn)">BTC</div>
+            <div>
+              <div class="net">Bitcoin (BTC)</div>
+              <div class="addr">bc1q7pvrm7hyftyxz0epzz5422dpf79ep668pltysa</div>
+            </div>
+            <button class="copy-btn" data-addr="bc1q7pvrm7hyftyxz0epzz5422dpf79ep668pltysa">Copy</button>
+          </div>
+
+          <div class="crypto-card">
+            <div class="crypto-ico" style="background:rgba(210,168,255,.14);color:var(--purple)">ETH</div>
+            <div>
+              <div class="net">Ethereum (ETH)</div>
+              <div class="addr">0xdfDf1A851Ce5A817916c4412EBB34d863e23F8</div>
+            </div>
+            <button class="copy-btn" data-addr="0xdfDf1A851Ce5A817916c4412EBB34d863e23F8">Copy</button>
+          </div>
+
+          <div class="security-note">
+            <b>⚠️ Security note:</b> these are the only official addresses.
+            TeleSweep will never message you first, and no team member will
+            ever ask you to send funds to a different address. If someone
+            does, it is a scam.
+          </div>
+        </div>
+
+        <div>
+          <h3 style="margin:0 0 6px;font-size:1.2rem">Other ways to help</h3>
+          <p style="color:var(--muted);font-size:.94rem;margin:0">
+            Money is far from the only way to support the project — and
+            honestly, these matter just as much:
+          </p>
+          <ul class="other-help">
+            <li><span style="color:var(--warn)">⭐</span><span><b>Star the repository.</b> It costs nothing and directly helps others find the tool.</span></li>
+            <li><span style="color:var(--danger)">🐛</span><span><b>Report bugs</b> and request features in the issue tracker.</span></li>
+            <li><span style="color:var(--accent)">🌍</span><span><b>Translate</b> TeleSweep into your language — it is a single JSON file.</span></li>
+            <li><span style="color:var(--accent-2)">📢</span><span><b>Tell a friend</b> who is drowning in dead Telegram chats.</span></li>
+            <li><span style="color:var(--purple)">💻</span><span><b>Contribute code</b> — PRs are welcome, from rules to UI polish.</span></li>
+          </ul>
+          <div style="margin-top:28px;display:flex;gap:12px;flex-wrap:wrap">
+            <a class="btn btn-primary" href="https://github.com/pouyamoradzad/telesweep" target="_blank" rel="noopener">★ Star the repo</a>
+            <a class="btn btn-ghost" href="https://github.com/pouyamoradzad/telesweep/issues" target="_blank" rel="noopener">Report an issue</a>
+          </div>
+          <p style="color:var(--dim);font-size:.85rem;margin-top:22px">
+            Thank you for keeping the internet a little tidier. 🧹
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== DISCLAIMER ============================== -->
+<section style="padding:0 0 20px">
+  <div class="wrap">
+    <div class="security-note reveal" style="background:rgba(227,179,65,.06);border-color:rgba(227,179,65,.22)">
+      <b style="color:var(--warn)">⚠️ Disclaimer:</b> TeleSweep operates
+      <b>your own Telegram account</b> and can delete chats. Deletion is
+      irreversible. Use dry-run first, review the reports, and test on a
+      throwaway bot or channel before cleaning anything you care about. You
+      are responsible for your account. TeleSweep is not affiliated with
+      Telegram.
+    </div>
+  </div>
+</section>
+
+<!-- ============================== FOOTER ============================== -->
+<footer>
+  <div class="wrap">
+    <div>🧹 <b>TeleSweep</b> — clean your dead Telegram chats. MIT License.</div>
+    <div class="links">
+      <a href="https://github.com/pouyamoradzad/telesweep" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/pouyamoradzad/telesweep/issues" target="_blank" rel="noopener">Issues</a>
+      <a href="https://github.com/pouyamoradzad/telesweep/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a>
+      <a href="https://github.com/pouyamoradzad/telesweep/blob/main/SECURITY.md" target="_blank" rel="noopener">Security</a>
+      <a href="#donate">Donate</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Copy-to-clipboard for crypto addresses
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const addr = btn.dataset.addr;
+      try {
+        await navigator.clipboard.writeText(addr);
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = addr; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); ta.remove();
+      }
+      btn.textContent = '✓ Copied';
+      btn.classList.add('done');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1800);
+    });
+  });
+</script>
+</body>
+</html>

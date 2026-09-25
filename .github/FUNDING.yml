@@ -1,0 +1,5 @@
+# These are the official TeleSweep funding addresses.
+# GitHub uses this file to render the "Sponsor" button on the repo.
+# Do not edit unless you are a maintainer.
+
+custom: ["https://telesweep.github.io/donate"]

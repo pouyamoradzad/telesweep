@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="__LOCALE__" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TeleSweep</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1c2330;
+    --border: #2a3342;
+    --text: #e6edf3;
+    --muted: #8b98a9;
+    --accent: #4c8dff;
+    --accent-dim: #2d4f8f;
+    --danger: #ff5d5d;
+    --ok: #3fb950;
+    --warn: #d29922;
+    --radius: 10px;
+    /* Multi-script font stack: Latin / Arabic+Persian / CJK / fallback */
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "Helvetica Neue", Arial, "Noto Sans", "Noto Sans Arabic",
+                 "Vazirmatn", "IRANSans", "Geeza Pro", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC",
+                 "Noto Sans CJK TC", "Malgun Gothic", sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                 "Liberation Mono", monospace;
+  }
+  html[dir="rtl"] { --font-sans: "Vazirmatn", "IRANSans", "Noto Sans Arabic",
+                     "Segoe UI", -apple-system, Tahoma, Arial, sans-serif; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px; background: var(--bg); color: var(--text);
+    font-family: var(--font-sans); font-size: 15px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+  }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 1.15rem; margin: 0 0 12px; }
+  h3 { font-size: 1rem; margin: 0 0 8px; }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); font-size: 0.85rem; }
+
+  .wrap { max-width: 1120px; margin: 0 auto; }
+
+  header.top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 12px; flex: none;
+    background: linear-gradient(135deg, var(--accent), #7c5cff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px; margin: 14px 0;
+  }
+
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; }
+  .stat {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 18px; min-width: 150px;
+    flex: 1 1 150px;
+  }
+  .stat .num { font-size: 1.7rem; font-weight: 700; line-height: 1.2; }
+  .stat .lbl { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+
+  button {
+    font-family: var(--font-sans); font-size: 0.9rem; font-weight: 600;
+    background: var(--accent); color: #fff; border: 1px solid transparent;
+    border-radius: 8px; padding: 9px 16px; cursor: pointer; margin-inline-end: 6px;
+    transition: opacity .15s, transform .05s;
+  }
+  button:hover { opacity: .88; }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.ghost { background: transparent; border-color: var(--border); color: var(--text); }
+  button.danger { background: var(--danger); }
+  button.ok { background: var(--ok); }
+  button.warn { background: var(--warn); color: #1a1a1a; }
+
+  input[type=password], select {
+    font-family: var(--font-sans); font-size: 0.9rem;
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
+    width: 100%; max-width: 380px;
+  }
+  input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); }
+  label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+  .table-scroll { overflow-x: auto; border: 1px solid var(--border);
+                  border-radius: var(--radius); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th, td { padding: 8px 10px; text-align: start; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { background: var(--panel-2); color: var(--muted); font-weight: 600;
+       position: sticky; top: 0; }
+  tbody tr:hover { background: var(--panel-2); }
+  td.numeric { font-variant-numeric: tabular-nums; }
+  td.reasons { white-space: normal; min-width: 180px; color: var(--muted); }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px;
+           font-size: 0.72rem; font-weight: 600; color: #fff; white-space: nowrap; }
+  .badge.del { background: var(--danger); }
+  .badge.prot { background: var(--ok); }
+  .badge.warn { background: var(--warn); color: #1a1a1a; }
+  .badge.ok { background: var(--ok); }
+  .badge.info { background: var(--accent-dim); }
+
+  .progress { width: 100%; height: 8px; background: var(--bg);
+              border-radius: 4px; overflow: hidden; margin-top: 10px; }
+  .progress > div { height: 100%; width: 0%; background: var(--accent);
+                    border-radius: 4px; transition: width .3s ease; }
+
+  .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+             margin-bottom: 12px; }
+  .spacer { flex: 1; }
+
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.66);
+    display: flex; align-items: center; justify-content: center; z-index: 50;
+    padding: 20px;
+  }
+  .modal {
+    background: var(--panel); border: 1px solid var(--danger);
+    border-radius: 14px; padding: 24px; max-width: 460px; width: 100%;
+    box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  }
+  .modal h3 { color: var(--danger); margin-bottom: 10px; }
+  .modal .btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+  .toast {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; margin-top: 12px; font-size: 0.85rem;
+  }
+  .toast.error { border-color: var(--danger); }
+  .toast.ok { border-color: var(--ok); }
+
+  .hidden { display: none !important; }
+  pre { background: var(--bg); padding: 10px; border-radius: 8px;
+        font-size: 0.75rem; overflow-x: auto; max-height: 200px; }
+  footer.top { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border);
+               color: var(--muted); font-size: 0.8rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="logo">🧹</div>
+      <div>
+        <h1 id="app-title">TeleSweep</h1>
+        <div class="muted" id="app-subtitle"></div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px">
+      <label class="muted" for="lang-select" id="lang-label"></label>
+      <select id="lang-select" onchange="changeLanguage(this.value)"></select>
+    </div>
+  </header>
+
+  <!-- Sign-in -->
+  <div class="card" id="auth-card">
+    <h3 id="auth-heading"></h3>
+    <p class="muted" id="auth-hint"></p>
+    <p class="muted" id="auth-token-hint" style="background:var(--bg); padding:10px; border-radius:8px; font-family:var(--font-mono); word-break:break-all"></p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px">
+      <input type="password" id="tokenbox" placeholder="" onkeypress="if(event.key==='Enter') saveToken()">
+      <button onclick="saveToken()" id="auth-submit"></button>
+    </div>
+    <div class="toast error hidden" id="auth-error"></div>
+  </div>
+
+  <div class="hidden" id="main">
+    <div class="stats" id="stats"></div>
+
+    <div class="card">
+      <div class="toolbar">
+        <button id="scan-btn" onclick="startScan()"></button>
+        <span class="muted" id="scan-status"></span>
+        <div class="spacer"></div>
+        <span class="muted" id="scan-hint"></span>
+      </div>
+      <div class="progress hidden" id="scan-progress"><div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="toolbar">
+        <label><input type="checkbox" id="only-flagged" checked onchange="renderChats()"> <span id="lbl-only-flagged"></span></label>
+        <label><input type="checkbox" id="block-bots" checked> <span id="lbl-block-bots"></span></label>
+        <div class="spacer"></div>
+        <button class="ghost" onclick="selectAll(true)" id="btn-select-all"></button>
+        <button class="ghost" onclick="selectAll(false)" id="btn-select-none"></button>
+        <button class="warn" onclick="requestDelete(false)" id="btn-preview"></button>
+        <button class="danger" onclick="requestDelete(true)" id="btn-delete"></button>
+      </div>
+      <div class="muted" id="delete-warning" style="margin-bottom:12px"></div>
+
+      <div class="table-scroll">
+        <table id="chats-table">
+          <thead><tr>
+            <th><input type="checkbox" onchange="selectAll(this.checked)"></th>
+            <th data-k="name"></th>
+            <th data-k="type"></th>
+            <th data-k="score"></th>
+            <th data-k="last"></th>
+            <th data-k="count"></th>
+            <th data-k="reasons"></th>
+            <th data-k="status"></th>
+            <th data-k="result"></th>
+          </tr></thead>
+          <tbody id="chats-body"></tbody>
+        </table>
+      </div>
+      <div class="toast hidden" id="delete-result"></div>
+    </div>
+
+    <div class="card">
+      <h3 id="reports-heading"></h3>
+      <button class="ghost" onclick="downloadReport('json')" id="btn-json"></button>
+      <button class="ghost" onclick="downloadReport('csv')" id="btn-csv"></button>
+      <button class="ghost" onclick="downloadReport('html')" id="btn-html"></button>
+    </div>
+  </div>
+
+  <footer class="top" id="footer-note"></footer>
+  <div class="card" style="text-align:center">
+    <div style="font-size:1.3rem; margin-bottom:4px">❤️</div>
+    <div style="font-weight:600; margin-bottom:4px" id="donate-heading"></div>
+    <div class="muted" id="donate-body" style="max-width:520px; margin:0 auto 12px"></div>
+    <button class="ghost" onclick="copyAddress('ton')" id="btn-ton"></button>
+    <button class="ghost" onclick="copyAddress('btc')" id="btn-btc"></button>
+    <button class="ghost" onclick="copyAddress('eth')" id="btn-eth"></button>
+  </div>
+</div>
+
+<!-- Final confirmation modal -->
+<div class="modal-backdrop hidden" id="confirm-backdrop">
+  <div class="modal">
+    <h3 id="confirm-title"></h3>
+    <p id="confirm-body"></p>
+    <div class="btns">
+      <button class="ghost" onclick="hideConfirm()" id="confirm-no"></button>
+      <button class="danger" id="confirm-yes"></button>
+    </div>
+  </div>
+</div>
+
+<script>
+let TOKEN = '__TOKEN__';
+let LOCALE = '__LOCALE__';
+let LANGS = '__LANGUAGES__'.split(',').filter(Boolean);
+let I18N = {};
+let CHATS = [];
+let RESULTS = [];
+let lastPreview = null;
+
+const ADDRESSES = {
+  ton: 'TBCQztfSB4kbduM26bgJMRHgXzDZD6PL4L',
+  btc: 'bc1q7pvrm7hyftyxz0epzz5422dpf79ep668pltysa',
+  eth: '0xdfDf1A851Ce5A817916c4412EBB34d863e23F8',
+};
+
+function copyAddress(net) {
+  const addr = ADDRESSES[net];
+  navigator.clipboard.writeText(addr).then(() => {
+    showResult('<b>' + net.toUpperCase() + '</b> ' + t('donate.copied') + '<br><code>' + addr + '</code>', 'ok');
+  }).catch(() => {
+    showResult('<code>' + addr + '</code>', '');
+  });
+}
+
+function t(key, vars) {
+  const parts = key.split('.');
+  let node = I18N;
+  for (const p of parts) {
+    if (node && typeof node === 'object' && p in node) node = node[p];
+    else return key;
+  }
+  if (typeof node !== 'string') return key;
+  if (vars) {
+    node = node.replace(/\{(\w+)\}/g, (_, k) => (k in vars ? String(vars[k]) : '{' + k + '}'));
+  }
+  return node;
+}
+
+function esc(s) {
+  if (s === null || s === undefined) return '—';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function applyTranslations() {
+  const set = (id, key, vars) => { const el = document.getElementById(id); if (el) el.textContent = t(key, vars); };
+  document.documentElement.lang = LOCALE;
+  document.documentElement.dir = I18N.meta && I18N.meta.direction === 'rtl' ? 'rtl' : 'ltr';
+
+  set('app-title', 'app.title');
+  set('app-subtitle', 'app.subtitle');
+  set('auth-heading', 'auth.heading');
+  set('auth-hint', 'auth.hint');
+  set('auth-token-hint', 'auth.token_hint');
+  set('auth-submit', 'auth.submit');
+  set('lang-label', 'language.label');
+  set('scan-btn', scanStatus === 'done' ? 'scan.button_again' : 'scan.button');
+  set('scan-hint', 'scan.hint');
+  set('lbl-only-flagged', 'actions.only_flagged');
+  set('lbl-block-bots', 'actions.block_bots');
+  set('btn-select-all', 'actions.select_all');
+  set('btn-select-none', 'actions.select_none');
+  set('btn-preview', 'actions.preview');
+  set('btn-delete', 'actions.delete');
+  set('delete-warning', 'actions.delete_warning');
+  set('reports-heading', 'reports.heading');
+  set('btn-json', 'reports.json');
+  set('btn-csv', 'reports.csv');
+  set('btn-html', 'reports.html');
+  set('footer-note', 'footer.security_note');
+  set('confirm-title', 'actions.confirm_title');
+  set('confirm-no', 'actions.confirm_no');
+  set('confirm-yes', 'actions.confirm_yes');
+  set('donate-heading', 'donate.heading');
+  set('donate-body', 'donate.body');
+  set('btn-ton', 'donate.ton');
+  set('btn-btc', 'donate.btc');
+  set('btn-eth', 'donate.eth');
+
+  const tb = document.getElementById('tokenbox');
+  if (tb) tb.placeholder = t('auth.placeholder');
+
+  document.querySelectorAll('th[data-k]').forEach(th => {
+    const k = th.dataset.k;
+    th.textContent = t('table.' + ({name:'name', type:'type', score:'score', last:'last_message', count:'message_count', reasons:'reasons', status:'status', result:'result'})[k]);
+  });
+
+  const sel = document.getElementById('lang-select');
+  sel.innerHTML = LANGS.map(l => `<option value="${l}" ${l===LOCALE?'selected':''}>${esc((I18N.__languages||{})[l] || l)}</option>`).join('');
+}
+
+let scanStatus = 'idle';
+
+async function loadI18n(lang) {
+  const res = await fetch('/api/i18n?lang=' + encodeURIComponent(lang || LOCALE));
+  const data = await res.json();
+  LOCALE = data.locale;
+  I18N = data.catalog;
+  I18N.__languages = data.languages;
+  applyTranslations();
+  renderChats();
+}
+
+async function changeLanguage(lang) {
+  await loadI18n(lang);
+  const u = new URL(location.href);
+  u.searchParams.set('lang', lang);
+  history.replaceState(null, '', u);
+}
+
+async function saveToken() {
+  TOKEN = document.getElementById('tokenbox').value.trim();
+  if (!TOKEN) {
+    const e = document.getElementById('auth-error');
+    e.textContent = t('auth.required');
+    e.classList.remove('hidden');
+    return;
+  }
+  document.getElementById('auth-error').classList.add('hidden');
+  document.getElementById('auth-card').classList.add('hidden');
+  document.getElementById('main').classList.remove('hidden');
+  await loadChats();
+}
+
+async function api(path, opts) {
+  const res = await fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts || {}));
+  if (res.status === 401) {
+    const e = document.getElementById('auth-error');
+    e.textContent = t('auth.invalid');
+    e.classList.remove('hidden');
+    document.getElementById('auth-card').classList.remove('hidden');
+    document.getElementById('main').classList.add('hidden');
+    throw new Error('unauthorized');
+  }
+  return res;
+}
+
+async function startScan() {
+  document.getElementById('scan-btn').disabled = true;
+  document.getElementById('scan-status').textContent = t('scan.starting');
+  await api('/api/scan?token=' + encodeURIComponent(TOKEN), { method: 'POST' });
+  pollStatus();
+}
+
+let pollTimer = null;
+function pollStatus() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    const res = await api('/api/scan/status?token=' + encodeURIComponent(TOKEN));
+    const st = await res.json();
+    scanStatus = st.status;
+    const bar = document.getElementById('scan-progress');
+    if (st.status === 'scanning') {
+      bar.classList.remove('hidden');
+      bar.firstElementChild.style.width = (st.total ? Math.round(st.current / st.total * 100) : 0) + '%';
+      document.getElementById('scan-status').textContent = t('scan.scanning', { current: st.current, total: st.total });
+    } else if (st.status === 'done') {
+      bar.classList.add('hidden');
+      clearInterval(pollTimer); pollTimer = null;
+      document.getElementById('scan-btn').disabled = false;
+      document.getElementById('scan-status').textContent = t('scan.done');
+      set('scan-btn', 'scan.button_again');
+      loadChats();
+    } else if (st.status === 'error') {
+      clearInterval(pollTimer); pollTimer = null;
+      document.getElementById('scan-btn').disabled = false;
+      document.getElementById('scan-status').textContent = t('scan.error', { error: st.error || '' });
+      bar.classList.add('hidden');
+    }
+  }, 1000);
+}
+
+function set(id, key, vars) { const el = document.getElementById(id); if (el) el.textContent = t(key, vars); }
+
+async function loadChats() {
+  const res = await api('/api/chats?token=' + encodeURIComponent(TOKEN) + '&only_flagged=false');
+  if (!res.ok) return;
+  const data = await res.json();
+  CHATS = data.dialogs || [];
+  RESULTS = data.last_results || [];
+  if (CHATS.length) scanStatus = 'done';
+  renderChats();
+}
+
+function typeLabel(t_) { return t('types.' + t_, ) || t_; }
+
+function badge(d) {
+  if (d.protection_reason) return `<span class="badge prot">${t('badges.protected')}</span>`;
+  if (d.should_delete) return `<span class="badge del">${t('badges.flagged')}</span>`;
+  if (d.risk_score >= 60) return `<span class="badge warn">${t('badges.high_risk')}</span>`;
+  return '';
+}
+
+function outcomeBadge(r) {
+  if (!r) return '';
+  const cls = (r.result === 'deleted' || r.result === 'left') ? 'ok' : 'warn';
+  const label = t('actions.' + ({
+    deleted: 'deleted', left: 'left', blocked: 'deleted',
+    skipped_dry_run: 'skipped_dry_run', skipped_protected: 'failed',
+    skipped_whitelist: 'failed', failed: 'failed', not_found: 'not_found'
+  })[r.result], ) || r.result;
+  return `<span class="badge ${cls}">${esc(label)}</span>`;
+}
+
+function renderChats() {
+  const onlyFlagged = document.getElementById('only-flagged').checked;
+  let rows = CHATS;
+  if (onlyFlagged) rows = rows.filter(d => d.should_delete);
+  rows = rows.slice().sort((a, b) => (b.risk_score || 0) - (a.risk_score || 0));
+
+  const tbody = document.getElementById('chats-body');
+  tbody.innerHTML = rows.map(d => {
+    const result = RESULTS.find(r => r.dialog_id === d.id);
+    const reasons = (d.evidence || []).map(e => t('rules.' + e.rule, ) || e.rule).join('، ');
+    return `<tr>
+      <td><input type="checkbox" data-id="${d.id}"></td>
+      <td><b>${esc(d.name)}</b></td>
+      <td>${esc(typeLabel(d.entity_type))}</td>
+      <td class="numeric"><b>${d.risk_score || 0}</b></td>
+      <td class="numeric">${esc((d.last_message_date || '—').slice(0, 10))}</td>
+      <td class="numeric">${d.message_count || 0}</td>
+      <td class="reasons">${esc(reasons)}</td>
+      <td>${badge(d)}</td>
+      <td>${outcomeBadge(result)}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" class="muted" style="text-align:center;padding:24px">${t('table.empty')}</td></tr>`;
+
+  const flagged = CHATS.filter(d => d.should_delete).length;
+  const protectedC = CHATS.filter(d => d.protection_reason).length;
+  const high = CHATS.filter(d => d.risk_score >= 60 && !d.protection_reason).length;
+  document.getElementById('stats').innerHTML =
+    stat(CHATS.length, t('stats.total'), 'var(--accent)') +
+    stat(flagged, t('stats.flagged'), 'var(--danger)') +
+    stat(protectedC, t('stats.protected'), 'var(--ok)') +
+    stat(high, t('stats.high_risk'), 'var(--warn)');
+}
+
+function stat(n, label, color) {
+  return `<div class="stat"><div class="num" style="color:${color}">${n}</div><div class="lbl">${esc(label)}</div></div>`;
+}
+
+function selectAll(on) {
+  document.querySelectorAll('#chats-body input[type=checkbox]').forEach(cb => cb.checked = on);
+}
+
+function selectedIds() {
+  return [...document.querySelectorAll('#chats-body input[type=checkbox]:checked')]
+    .map(cb => parseInt(cb.dataset.id));
+}
+
+function showResult(msg, cls) {
+  const el = document.getElementById('delete-result');
+  el.className = 'toast ' + (cls || '');
+  el.innerHTML = msg;
+  el.classList.remove('hidden');
+}
+
+async function requestDelete(confirm) {
+  const ids = selectedIds();
+  if (!ids.length) { showResult(t('actions.nothing_selected'), 'error'); return; }
+  const blockBots = document.getElementById('block-bots').checked;
+  const res = await api('/api/delete', {
+    method: 'POST',
+    body: JSON.stringify({ token: TOKEN, ids, confirm: false, block_bots: blockBots })
+  });
+  const data = await res.json();
+
+  if (data.mode === 'dry_run_preview') {
+    lastPreview = { ids, block_bots };
+    if (!confirm) {
+      const lines = data.preview.map(p =>
+        `<div>• <b>${esc(p.name)}</b> → ${esc(t('actions.plan_' + p.planned_action.replace('+','_block'))) || esc(p.planned_action)} <span class="muted">(${t('table.score')} ${p.risk_score})</span></div>`
+      ).join('');
+      showResult(`<b>${t('actions.preview')}</b><br>${lines}`, '');
+      return;
+    }
+    document.getElementById('confirm-body').textContent = t('actions.confirm_body', { count: ids.length });
+    document.getElementById('confirm-backdrop').classList.remove('hidden');
+    document.getElementById('confirm-yes').onclick = async () => {
+      hideConfirm();
+      const r2 = await api('/api/delete', {
+        method: 'POST',
+        body: JSON.stringify({ token: TOKEN, ids, confirm: true, block_bots: blockBots })
+      });
+      const d2 = await r2.json();
+      if (d2.mode === 'executed') {
+        showResult(`<b>${t('actions.done', { deleted: d2.deleted, failed: d2.failed })}</b>
+          <a href="/api/report/html?token=${encodeURIComponent(TOKEN)}&lang=${encodeURIComponent(LOCALE)}" target="_blank" style="margin-inline-start:8px">${t('reports.html')}</a>`, d2.failed ? 'error' : 'ok');
+        loadChats();
+      }
+    };
+  }
+}
+
+function hideConfirm() { document.getElementById('confirm-backdrop').classList.add('hidden'); }
+
+function downloadReport(fmt) {
+  window.open('/api/report/' + fmt + '?token=' + encodeURIComponent(TOKEN) + '&lang=' + encodeURIComponent(LOCALE), '_blank');
+}
+
+(async function init() {
+  await loadI18n(LOCALE);
+  const params = new URLSearchParams(location.search);
+  const tok = params.get('token');
+  if (tok) {
+    document.getElementById('tokenbox').value = tok;
+    TOKEN = tok;
+    saveToken();
+  } else if (TOKEN) {
+    document.getElementById('tokenbox').value = TOKEN;
+    saveToken();
+  }
+})();
+</script>
+</body>
+</html>

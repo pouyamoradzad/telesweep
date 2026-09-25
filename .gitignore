@@ -1,0 +1,37 @@
+# .gitignore — Telegram Cleaner
+# هیچ‌وقت اعتبارنامه‌ها یا داده‌های کاربر وارد گیت نشوند
+
+# اعتبارنامه رمزنگاری‌شده و سشن تلگرام
+config/secrets.enc
+config/passphrase.txt
+*.session
+*.session-journal
+*.session.sqlite
+*.session.sqlite-shm
+*.session.sqlite-wal
+
+# کش اسکن و گزارش‌ها (داده شخصی)
+data/
+reports/
+
+# پایتون
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# سیستم‌فایل
+.DS_Store
+Thumbs.db
+
+# لاگ‌ها
+*.log
+logs/
