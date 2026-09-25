@@ -59,7 +59,15 @@ def create_app(
     """Build the FastAPI app with injected dependencies."""
     state = WebUIState()
     app = FastAPI(title="TeleSweep", docs_url=None, redoc_url=None)
-    state_lock = asyncio.Lock()
+    # asyncio.Lock() binds to the running loop at construction time on
+    # Python 3.9, so create it lazily inside the first request instead.
+    state_lock: Optional[asyncio.Lock] = None
+
+    def _lock() -> asyncio.Lock:
+        nonlocal state_lock
+        if state_lock is None:
+            state_lock = asyncio.Lock()
+        return state_lock
 
     # ------------------------------------------------------------------
     # Helpers
@@ -135,7 +143,7 @@ def create_app(
         request: Request = None,  # type: ignore[assignment]
     ) -> dict[str, Any]:
         _verify_token(request, token)
-        async with state_lock:
+        async with _lock():
             if state.scan_status == "scanning":
                 return {"status": "already_scanning"}
             state.scan_status = "scanning"
