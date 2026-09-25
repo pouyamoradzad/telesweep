@@ -28,9 +28,9 @@ def app(config):
 
 @pytest.fixture
 def client(app):
-    from fastapi.testclient import TestClient
+    from .conftest import build_test_client
 
-    return TestClient(app)
+    return build_test_client(app)
 
 
 @pytest.fixture
@@ -59,9 +59,9 @@ def populated_app(config):
 
 @pytest.fixture
 def populated_client(populated_app):
-    from fastapi.testclient import TestClient
+    from .conftest import build_test_client
 
-    return TestClient(populated_app)
+    return build_test_client(populated_app)
 
 
 class TestAuth:

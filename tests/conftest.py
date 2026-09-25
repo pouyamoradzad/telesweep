@@ -63,3 +63,21 @@ def make_message(msg_id: int, days: int, from_me: bool, text: str) -> MessageSam
         has_media=False,
         text_preview=text,
     )
+
+
+def build_test_client(app: Any) -> Any:
+    """Build a FastAPI TestClient.
+
+    On Python 3.9 the TestClient needs a current event loop in the main
+    thread, which pytest-asyncio's auto mode does not provide for sync tests.
+    """
+    import asyncio
+
+    from fastapi.testclient import TestClient
+
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+
+    return TestClient(app)

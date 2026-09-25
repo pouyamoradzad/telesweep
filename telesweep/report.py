@@ -166,8 +166,7 @@ def write_html(report: dict[str, Any], path: Path) -> Path:
 
         reasons = "; ".join(rule_label(r) for r in (d.get("rules") or []))
 
-        rows_html.append(
-            f"""<tr>
+        rows_html.append(f"""<tr>
   <td class="name">{esc(d.get('name'))}</td>
   <td>{type_label(d.get('entity_type'))}</td>
   <td class="score">{d.get('risk_score', 0)}</td>
@@ -176,8 +175,7 @@ def write_html(report: dict[str, Any], path: Path) -> Path:
   <td>{d.get('message_count', 0)}</td>
   <td class="reasons">{esc(reasons)}</td>
   <td>{result_badge}</td>
-</tr>"""
-        )
+</tr>""")
 
     def kv_list(data: dict[str, Any], empty: str) -> str:
         if not data:
